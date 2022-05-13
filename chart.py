@@ -1,73 +1,94 @@
-from tkinter import *
-from pandas import DataFrame
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from PIL import ImageTk, Image
+import mysql.connector
 import tkinter as tk
-
-class multiple_chart:
-    def __init__(self, master):
-        self.root = master
-
-        # [BOOK ISSUE] ===============================================================
-        self.chart_button = Button(self.root,
-                                       text="CHART",
-                                       font=("tahoma", 15),
-                                       borderwidth=0,
-                                       fg="#C5C5C5",
-                                       background="#262626",
-                                       activeforeground="#C5C5C5",
-                                       activebackground="#262626",
-                                       command=self.openchart)
-        self.chart_button.place(x=20,
-                                    y=480)
-
-    def openchart(self):
-        Is = ChartWindow()
+import matplotlib
+matplotlib.use('TkAgg')
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import (
+FigureCanvasTkAgg,
+NavigationToolbar2Tk
+)
 
 
-
-
-
-class ChartWindow:
+class chart(tk.Tk):
     def __init__(self):
-        self.root =Toplevel()
-        self.root.title(" MULTIPLE CHARTS | LIBRARY MANAGEMENT SYSTEM")
-        self.width = self.root.winfo_screenwidth()
-        self.height = self.root.winfo_screenheight()
+        super().__init__()
+        self.title("CHART")
 
-        self.root.geometry("{w}x{h}+255+155".format(w=round(self.width * 0.83308),
-                                                    h=round(self.height * 0.81771)))
+        mydb = mysql.connector.connect(host="localhost",
+                                       user="root",
+                                       password="",
+                                       database="admin")
+        mycursor = mydb.cursor()
 
-        self.root.overrideredirect(1)
-        self.root.resizable(False, False)
+        # Fecthing Data From mysql to my python progame
+        mycursor.execute("select name, marks from student")
+        result = mycursor.fetchall
 
-        data1 = {'Book Name': ['Python', 'Javascript', 'Flutter', 'MongDB', 'Angular'],
-                 ' Quantity Borrow': [11, 12, 8, 9, 15]
-                 }
-        df1 = DataFrame(data1, columns=['Book Name', ' Quantity Borrow'])
+        Names = []
+        Marks = []
 
-        data2 = {'Month': ['May', 'January', 'March', 'December/2021'],
-                 'Rate (%)': [17.0, 15.5, 13.2, 14.5]
-                 }
-        df2 = DataFrame(data2, columns=['Month', 'Rate (%)'])
+        for i in mycursor:
+            Names.append(i[0])
+            Marks.append(int(i[1]))
 
-        figure1 = plt.Figure(figsize=(9,10), dpi=70)
-        ax1 = figure1.add_subplot(111)
-        bar1 = FigureCanvasTkAgg(figure1,self.root)
-        bar1.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
-        df1 = df1[['Book Name', ' Quantity Borrow']].groupby('Book Name').sum()
-        df1.plot(kind='bar', legend=True, ax=ax1,fontsize=10,color='green')
-        ax1.set_title('Book Name &  The Most Borrowed Books in April, 2022',fontsize=19)
+        data = dict(zip(Names, Marks))
+        print(data)
+        print("Name of Students = ", Names)
+        print("Marks of Students = ", Marks)
 
-        figure2 = plt.Figure(figsize=(9, 10), dpi=70)
-        ax2 = figure2.add_subplot(111)
-        line2 = FigureCanvasTkAgg(figure2,self.root)
-        line2.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
-        df2 = df2[['Month', 'Rate (%)']].groupby('Month').sum()
-        df2.plot(kind='line', legend=True, ax=ax2, color='r', marker='o', fontsize=11)
-        ax2.set_title('Percentage Of Monthly Borrowed in Library ,2022',fontsize=20)
+
+        # prepare data
+        languages = data.keys()
+        popularity = data.values()
 
 
 
-# root.mainloop()
+        # create a figure
+        figure = Figure(figsize=(6, 4), dpi=100)
+
+
+
+        # create FigureCanvasTkAgg object
+        figure_canvas = FigureCanvasTkAgg(figure, self)
+
+
+
+        # create the toolbar
+        NavigationToolbar2Tk(figure_canvas, self)
+
+
+
+        # create axes
+        axes = figure.add_subplot()
+
+
+
+        # create the barchart
+        axes.bar(languages, popularity)
+        axes.set_title('Top 5 Programming Languages')
+        axes.set_ylabel('Popularity')
+
+
+
+        figure_canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+
+
+
+if __name__ == '__main__':
+    app = chart()
+    app.mainloop()
+# window = Tk()
+# window.title("WHORE")
+# window.geometry("600x500")
+#
+# # Visulizing Data using Matplotlib
+# plt.bar(Names, Marks)
+# plt.ylim(0, 5)
+# plt.xlabel("Name of Students")
+# plt.ylabel("Marks of Students")
+# plt.title("Student's Information")
+# plt.show()
+#
+#
+# window.mainloop()
